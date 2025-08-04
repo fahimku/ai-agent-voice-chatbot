@@ -64,43 +64,43 @@ export function VoicePopup({
   }, [isOpen]);
 
   // Handle waiting sound during audio processing
-  useEffect(() => {
-    if (isAudioProcessing && isOpen) {
-      // Create a simple beep sound using Web Audio API
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+  // useEffect(() => {
+  //   if (isAudioProcessing && isOpen) {
+  //     // Create a simple beep sound using Web Audio API
+  //     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  //     const oscillator = audioContext.createOscillator();
+  //     const gainNode = audioContext.createGain();
       
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+  //     oscillator.connect(gainNode);
+  //     gainNode.connect(audioContext.destination);
       
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.type = 'sine';
+  //     oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+  //     oscillator.type = 'sine';
       
-      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+  //     gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+  //     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
       
-      oscillator.start();
+  //     oscillator.start();
       
-      // Create a looping interval for the beep sound
-      const interval = setInterval(() => {
-        if (!isAudioProcessing || !isOpen) {
-          clearInterval(interval);
-          oscillator.stop();
-          return;
-        }
+  //     // Create a looping interval for the beep sound
+  //     const interval = setInterval(() => {
+  //       if (!isAudioProcessing || !isOpen) {
+  //         clearInterval(interval);
+  //         oscillator.stop();
+  //         return;
+  //       }
         
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      }, 1000);
+  //       gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+  //       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+  //     }, 1000);
       
-      setWaitingAudio({ stop: () => { clearInterval(interval); oscillator.stop(); } } as any);
-    } else if (waitingAudio) {
-      // Stop waiting sound
-      waitingAudio.stop();
-      setWaitingAudio(null);
-    }
-  }, [isAudioProcessing, isOpen]);
+  //     setWaitingAudio({ stop: () => { clearInterval(interval); oscillator.stop(); } } as any);
+  //   } else if (waitingAudio) {
+  //     // Stop waiting sound
+  //     waitingAudio.stop();
+  //     setWaitingAudio(null);
+  //   }
+  // }, [isAudioProcessing, isOpen]);
 
   // Cleanup waiting audio when popup closes
   useEffect(() => {
