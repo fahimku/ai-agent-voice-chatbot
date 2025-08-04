@@ -1,10 +1,9 @@
-# Voice AI Agent
+# ChatBOT Voice AI Agent
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.3.4-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC)](https://tailwindcss.com/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT-412991)](https://openai.com/)
-[![Composio](https://img.shields.io/badge/Composio-Core-orange)](https://composio.dev/)
 
 A modern voice-enabled AI agent built with Next.js that lets you have natural conversations with AI using speech recognition and text-to-speech capabilities.
 
@@ -29,38 +28,6 @@ A modern voice-enabled AI agent built with Next.js that lets you have natural co
 - **State Management**: Zustand
 - **Animations**: Framer Motion
 
-## Project Structure
-
-```
-voice-ai-agent/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   │   ├── chat/          # Chat endpoint
-│   │   └── tts/           # Text-to-speech endpoint
-│   ├── globals.css        # Global styles
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Home page
-├── components/            # React components
-│   ├── ui/               # Base UI components
-│   ├── chat-header.tsx   # Chat header component
-│   ├── chat-input.tsx    # Message input component
-│   ├── chat-interface.tsx # Main chat interface
-│   ├── chat-messages.tsx # Messages display
-│   └── settings-modal.tsx # Settings modal
-├── hooks/                # Custom React hooks
-│   ├── use-audio.ts      # Audio playback logic
-│   ├── use-chat.ts       # Chat state management
-│   ├── use-mounted.ts    # Mount detection
-│   └── use-speech-recognition.ts # Speech recognition
-├── lib/                  # Utility libraries
-│   ├── validators/       # Input validation
-│   ├── alias-store.ts    # State management
-│   ├── constants.ts      # App constants
-│   ├── error-handler.ts  # Error handling
-│   └── utils.ts          # Helper functions
-└── public/               # Static assets
-```
-
 ## Getting Started
 
 ### Prerequisites
@@ -68,7 +35,6 @@ voice-ai-agent/
 - Node.js 18+
 - npm or yarn
 - OpenAI API key
-- Composio API key (optional)
 
 ### Installation
 
@@ -95,7 +61,6 @@ Add your API keys:
 
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
-COMPOSIO_API_KEY=your_composio_api_key_here
 ```
 
 4. Run the development server:
