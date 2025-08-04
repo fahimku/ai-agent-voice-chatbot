@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useMounted } from "@/hooks/use-mounted";
 import { useChat } from "@/hooks/use-chat";
 import { useAudio } from "@/hooks/use-audio";
@@ -8,11 +8,13 @@ import { useSpeechRecognitionWithDebounce } from "@/hooks/use-speech-recognition
 import { ChatHeader } from "@/components/chat-header";
 import { ChatMessages } from "@/components/chat-messages";
 import { ChatInput } from "@/components/chat-input";
+import { VoicePopup } from "@/components/voice-popup";
 
 export function ChatInterface() {
   const hasMounted = useMounted();
   const { messages, isLoading, sendMessage } = useChat();
   const { playAudio, stopAudio, isPlaying } = useAudio();
+  const [isVoicePopupOpen, setIsVoicePopupOpen] = useState(false);
 
   const handleProcessMessage = useCallback(
     async (text: string) => {
@@ -20,6 +22,7 @@ export function ChatInterface() {
       if (botMessage) {
         await playAudio(botMessage.content);
       }
+      // Don't close voice popup - let user close it manually
     },
     [sendMessage, playAudio],
   );
@@ -36,6 +39,18 @@ export function ChatInterface() {
   });
 
   const handleMicClick = () => {
+    setIsVoicePopupOpen(true);
+  };
+
+  const handleVoicePopupClose = () => {
+    setIsVoicePopupOpen(false);
+    if (listening) {
+      stopListening();
+    }
+    resetTranscript();
+  };
+
+  const handleVoicePopupMicClick = () => {
     if (listening) {
       stopListening();
     } else {
@@ -44,6 +59,11 @@ export function ChatInterface() {
   };
 
   const handleInputSubmit = async (message: string) => {
+    resetTranscript();
+    await handleProcessMessage(message);
+  };
+
+  const handleVoicePopupSubmit = async (message: string) => {
     resetTranscript();
     await handleProcessMessage(message);
   };
@@ -67,8 +87,6 @@ export function ChatInterface() {
         </main>
         <ChatInput
           onSubmit={handleInputSubmit}
-          transcript=""
-          listening={false}
           isLoading={isLoading}
           browserSupportsSpeechRecognition={false}
           onMicClick={handleMicClick}
@@ -89,13 +107,22 @@ export function ChatInterface() {
 
       <ChatInput
         onSubmit={handleInputSubmit}
-        transcript={transcript}
-        listening={listening}
         isLoading={isLoading}
         browserSupportsSpeechRecognition={browserSupportsSpeechRecognition}
         onMicClick={handleMicClick}
         isPlaying={isPlaying}
         onStopAudio={stopAudio}
+      />
+
+      <VoicePopup
+        isOpen={isVoicePopupOpen}
+        onClose={handleVoicePopupClose}
+        onSubmit={handleVoicePopupSubmit}
+        transcript={transcript}
+        listening={listening}
+        isLoading={isLoading}
+        browserSupportsSpeechRecognition={browserSupportsSpeechRecognition}
+        onMicClick={handleVoicePopupMicClick}
       />
     </div>
   );

@@ -18,23 +18,40 @@ import { handleApiError, logError } from "@/lib/error-handler";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const COMPOSIO_API_KEY = process.env.COMPOSIO_API_KEY;
 
-if (!OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY environment variable is not set");
-}
-
-if (!COMPOSIO_API_KEY) {
-  throw new Error("COMPOSIO_API_KEY environment variable is not set");
-}
-
-const llm = new ChatOpenAI({
-  model: CONFIG.OPENAI_MODEL,
-  apiKey: OPENAI_API_KEY,
-  temperature: 0,
-});
-const toolset = new OpenAIToolSet({ apiKey: COMPOSIO_API_KEY });
+// Initialize these as null, we'll check them in the POST function
+let llm: ChatOpenAI | null = null;
+let toolset: OpenAIToolSet | null = null;
 
 export async function POST(req: NextRequest) {
   try {
+    // Check environment variables and initialize services
+    if (!OPENAI_API_KEY) {
+      return NextResponse.json(
+        { content: "OPENAI_API_KEY environment variable is not set. Please configure your OpenAI API key." },
+        { status: 500 }
+      );
+    }
+
+    if (!COMPOSIO_API_KEY) {
+      return NextResponse.json(
+        { content: "COMPOSIO_API_KEY environment variable is not set. Please configure your Composio API key." },
+        { status: 500 }
+      );
+    }
+
+    // Initialize services if not already initialized
+    if (!llm) {
+      llm = new ChatOpenAI({
+        model: CONFIG.OPENAI_MODEL,
+        apiKey: OPENAI_API_KEY,
+        temperature: 0,
+      });
+    }
+
+    if (!toolset) {
+      toolset = new OpenAIToolSet({ apiKey: COMPOSIO_API_KEY });
+    }
+
     const body = await req.json();
 
     const parsed = messageSchema.safeParse(body);
@@ -52,7 +69,7 @@ export async function POST(req: NextRequest) {
 
     if (!isToolUseNeeded) {
       console.log("handling as a general chat");
-      const chatResponse = await llm.invoke([new HumanMessage(message)]);
+      const chatResponse = await llm!.invoke([new HumanMessage(message)]);
       return NextResponse.json({
         content: chatResponse.text,
       });
@@ -128,7 +145,7 @@ async function checkToolUseIntent(message: string): Promise<boolean> {
       .describe("Classify the user's intent."),
   });
 
-  const structuredLlm = llm.withStructuredOutput(intentSchema);
+  const structuredLlm = llm!.withStructuredOutput(intentSchema);
 
   const result = await structuredLlm.invoke([
     new SystemMessage(SYSTEM_MESSAGES.INTENT_CLASSIFICATION),
@@ -142,7 +159,7 @@ async function identifyTargetApps(
   message: string,
   availableApps: string[],
 ): Promise<string[]> {
-  const structuredLlm = llm.withStructuredOutput(
+  const structuredLlm = llm!.withStructuredOutput(
     z.object({
       apps: z.array(z.string()).describe(
         `A list of application names mentioned or implied in the user's
@@ -167,7 +184,7 @@ async function findRelevantAliases(
 
   const aliasNames = aliasesToSearch.map((alias) => alias.name);
 
-  const structuredLlm = llm.withStructuredOutput(
+  const structuredLlm = llm!.withStructuredOutput(
     z.object({
       relevantAliasNames: z.array(z.string()).describe(
         `An array of alias names that are directly mentioned or semantically
@@ -200,7 +217,7 @@ async function executeToolCallingLogic(
     `Fetching Composio tools for apps: ${composioAppNames.join(", ")}...`,
   );
 
-  const tools = await toolset.getTools({ apps: [...composioAppNames] });
+  const tools = await toolset!.getTools({ apps: [...composioAppNames] });
   if (!tools || tools.length === 0) {
     console.warn("No tools found from Composio for the specified apps.");
     return `I couldn't find any actions for ${targetApps.join(" and ")}. Please
@@ -219,7 +236,7 @@ check your Composio connections.`;
   for (let i = 0; i < maxIterations; i++) {
     console.log(`Iteration ${i + 1}: Calling LLM with ${tools.length} tools.`);
 
-    const llmResponse = await llm.invoke(conversationHistory, { tools });
+    const llmResponse = await llm!.invoke(conversationHistory, { tools });
     conversationHistory.push(llmResponse);
 
     const toolCalls = llmResponse.tool_calls;
@@ -242,7 +259,7 @@ check your Composio connections.`;
       };
 
       try {
-        const executionResult = await toolset.executeToolCall(composioToolCall);
+        const executionResult = await toolset!.executeToolCall(composioToolCall);
         toolOutputs.push(
           new ToolMessage({
             content: executionResult,
@@ -262,7 +279,7 @@ check your Composio connections.`;
   }
 
   console.log("Generating final summary...");
-  const summaryResponse = await llm.invoke([
+  const summaryResponse = await llm!.invoke([
     new SystemMessage(SYSTEM_MESSAGES.SUMMARY_GENERATION),
     new HumanMessage(
       `Based on this conversation history, provide a summary of what was done.

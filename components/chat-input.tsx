@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
-  transcript: string;
-  listening: boolean;
   isLoading: boolean;
   browserSupportsSpeechRecognition: boolean;
   onMicClick: () => void;
@@ -16,8 +14,6 @@ interface ChatInputProps {
 
 export function ChatInput({
   onSubmit,
-  transcript,
-  listening,
   isLoading,
   browserSupportsSpeechRecognition,
   onMicClick,
@@ -25,10 +21,6 @@ export function ChatInput({
   onStopAudio,
 }: ChatInputProps) {
   const [inputValue, setInputValue] = useState<string>("");
-
-  useEffect(() => {
-    setInputValue(transcript);
-  }, [transcript]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,22 +39,17 @@ export function ChatInput({
         >
           <Input
             className="bg-transparent flex-grow outline-none text-zinc-800 placeholder-zinc-500 border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            placeholder={listening ? "Listening..." : "Send a message..."}
+            placeholder="Send a message..."
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            disabled={listening}
           />
           <Button
             type="button"
             onClick={onMicClick}
             size="icon"
             variant="ghost"
-            className={`ml-2 size-9 rounded-full transition-all duration-200 ${
-              listening
-                ? "bg-red-500 hover:bg-red-600 text-white shadow-lg scale-105"
-                : "bg-zinc-200 hover:bg-zinc-300 text-zinc-700 hover:scale-105"
-            }`}
-            aria-label={listening ? "Stop Listening" : "Start Listening"}
+            className="ml-2 size-9 rounded-full transition-all duration-200 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 hover:scale-105"
+            aria-label="Open Voice Chat"
             disabled={!browserSupportsSpeechRecognition}
           >
             <MicIcon size={18} />
@@ -93,9 +80,6 @@ export function ChatInput({
             <SendIcon size={18} />
           </Button>
         </form>
-        <p className="text-xs text-zinc-400">
-          Made with 🤍 by Shrijal Acharya @shricodev
-        </p>
       </div>
     </footer>
   );
