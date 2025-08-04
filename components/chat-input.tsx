@@ -1,6 +1,5 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, KeyboardEvent } from "react";
 import { MicIcon, SendIcon, Square } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 interface ChatInputProps {
@@ -30,18 +29,44 @@ export function ChatInput({
     }
   };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (inputValue.trim() && !isLoading) {
+        onSubmit(inputValue);
+        setInputValue("");
+      }
+    }
+  };
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputValue(e.target.value);
+    
+    // Auto-resize textarea
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+  };
+
   return (
     <footer className="fixed bottom-0 left-0 right-0 bg-white">
       <div className="flex flex-col items-center pb-4">
         <form
           onSubmit={handleSubmit}
-          className="flex items-center w-full md:max-w-[640px] max-w-[calc(100dvw-32px)] bg-zinc-100 rounded-full px-4 py-2 my-2 border"
+          className="flex items-end w-full md:max-w-[640px] max-w-[calc(100dvw-32px)] bg-zinc-100 rounded-2xl px-4 py-3 my-2 border min-h-[44px] max-h-[200px]"
         >
-          <Input
-            className="bg-transparent flex-grow outline-none text-zinc-800 placeholder-zinc-500 border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          <textarea
+            className="bg-transparent flex-grow outline-none text-zinc-800 placeholder-zinc-500 border-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none min-h-[20px] max-h-[120px] leading-5"
             placeholder="Send a message..."
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={handleTextareaChange}
+            onKeyDown={handleKeyDown}
+            rows={1}
+            style={{
+              height: 'auto',
+              minHeight: '20px',
+              maxHeight: '120px'
+            }}
           />
           <Button
             type="button"
