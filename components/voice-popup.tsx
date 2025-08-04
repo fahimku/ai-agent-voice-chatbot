@@ -13,6 +13,7 @@ interface VoicePopupProps {
   isLoading: boolean;
   browserSupportsSpeechRecognition: boolean;
   onMicClick: () => void;
+  onStopAudio: () => void;
 }
 
 export function VoicePopup({
@@ -24,6 +25,7 @@ export function VoicePopup({
   isLoading,
   browserSupportsSpeechRecognition,
   onMicClick,
+  onStopAudio,
 }: VoicePopupProps) {
   // Auto-submit when listening stops and we have a transcript (only when popup is open)
   useEffect(() => {
@@ -59,6 +61,8 @@ export function VoicePopup({
   }, [isOpen]);
 
   const handleMicClick = () => {
+    // Stop any playing audio when starting to listen
+    onStopAudio();
     onMicClick();
   };
 

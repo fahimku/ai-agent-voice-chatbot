@@ -18,13 +18,16 @@ export function ChatInterface() {
 
   const handleProcessMessage = useCallback(
     async (text: string) => {
+      // Stop any currently playing audio before processing new message
+      stopAudio();
+      
       const botMessage = await sendMessage(text);
       if (botMessage) {
         await playAudio(botMessage.content);
       }
       // Don't close voice popup - let user close it manually
     },
-    [sendMessage, playAudio],
+    [sendMessage, playAudio, stopAudio],
   );
 
   const {
@@ -48,6 +51,8 @@ export function ChatInterface() {
       stopListening();
     }
     resetTranscript();
+    // Stop any playing audio when popup closes
+    stopAudio();
   };
 
   const handleVoicePopupMicClick = () => {
@@ -123,6 +128,7 @@ export function ChatInterface() {
         isLoading={isLoading}
         browserSupportsSpeechRecognition={browserSupportsSpeechRecognition}
         onMicClick={handleVoicePopupMicClick}
+        onStopAudio={stopAudio}
       />
     </div>
   );
