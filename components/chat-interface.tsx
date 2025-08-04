@@ -13,10 +13,11 @@ import { VoicePopup } from "@/components/voice-popup";
 export function ChatInterface() {
   const hasMounted = useMounted();
   const { messages, isLoading, sendMessage } = useChat();
-  const { playAudio, stopAudio, isPlaying } = useAudio();
+  const { playAudio, stopAudio, isPlaying, isProcessing } = useAudio();
   const [isVoicePopupOpen, setIsVoicePopupOpen] = useState(false);
 
-  const handleProcessMessage = useCallback(
+  // Handle voice messages (from voice popup) - respond with audio only
+  const handleVoiceMessage = useCallback(
     async (text: string) => {
       // Stop any currently playing audio before processing new message
       stopAudio();
@@ -30,6 +31,15 @@ export function ChatInterface() {
     [sendMessage, playAudio, stopAudio],
   );
 
+  // Handle text messages (from text input) - respond with text only
+  const handleTextMessage = useCallback(
+    async (text: string) => {
+      const botMessage = await sendMessage(text);
+      // No audio response for text messages
+    },
+    [sendMessage],
+  );
+
   const {
     transcript,
     listening,
@@ -38,7 +48,7 @@ export function ChatInterface() {
     startListening,
     stopListening,
   } = useSpeechRecognitionWithDebounce({
-    onTranscriptComplete: handleProcessMessage,
+    onTranscriptComplete: handleVoiceMessage,
   });
 
   const handleMicClick = () => {
@@ -65,12 +75,12 @@ export function ChatInterface() {
 
   const handleInputSubmit = async (message: string) => {
     resetTranscript();
-    await handleProcessMessage(message);
+    await handleTextMessage(message);
   };
 
   const handleVoicePopupSubmit = async (message: string) => {
     resetTranscript();
-    await handleProcessMessage(message);
+    await handleVoiceMessage(message);
   };
 
   if (!hasMounted) return null;
@@ -126,6 +136,7 @@ export function ChatInterface() {
         transcript={transcript}
         listening={listening}
         isLoading={isLoading}
+        isAudioProcessing={isProcessing}
         browserSupportsSpeechRecognition={browserSupportsSpeechRecognition}
         onMicClick={handleVoicePopupMicClick}
         onStopAudio={stopAudio}

@@ -11,6 +11,7 @@ interface VoicePopupProps {
   transcript: string;
   listening: boolean;
   isLoading: boolean;
+  isAudioProcessing: boolean;
   browserSupportsSpeechRecognition: boolean;
   onMicClick: () => void;
   onStopAudio: () => void;
@@ -23,10 +24,12 @@ export function VoicePopup({
   transcript,
   listening,
   isLoading,
+  isAudioProcessing,
   browserSupportsSpeechRecognition,
   onMicClick,
   onStopAudio,
 }: VoicePopupProps) {
+  const [waitingAudio, setWaitingAudio] = useState<{ stop: () => void } | null>(null);
   // Auto-submit when listening stops and we have a transcript (only when popup is open)
   useEffect(() => {
     if (isOpen && !listening && transcript.trim() && !isLoading) {
@@ -60,6 +63,54 @@ export function VoicePopup({
     };
   }, [isOpen]);
 
+  // Handle waiting sound during audio processing
+  useEffect(() => {
+    if (isAudioProcessing && isOpen) {
+      // Create a simple beep sound using Web Audio API
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start();
+      
+      // Create a looping interval for the beep sound
+      const interval = setInterval(() => {
+        if (!isAudioProcessing || !isOpen) {
+          clearInterval(interval);
+          oscillator.stop();
+          return;
+        }
+        
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      }, 1000);
+      
+      setWaitingAudio({ stop: () => { clearInterval(interval); oscillator.stop(); } } as any);
+    } else if (waitingAudio) {
+      // Stop waiting sound
+      waitingAudio.stop();
+      setWaitingAudio(null);
+    }
+  }, [isAudioProcessing, isOpen]);
+
+  // Cleanup waiting audio when popup closes
+  useEffect(() => {
+    return () => {
+      if (waitingAudio) {
+        waitingAudio.stop();
+      }
+    };
+  }, [waitingAudio]);
+
   const handleMicClick = () => {
     // Stop any playing audio when starting to listen
     onStopAudio();
@@ -78,11 +129,11 @@ export function VoicePopup({
             <div className="relative">
               <Button
                 onClick={handleMicClick}
-                disabled={!browserSupportsSpeechRecognition || isLoading}
+                disabled={!browserSupportsSpeechRecognition || isLoading || isAudioProcessing}
                 className={`w-32 h-32 rounded-full transition-all duration-300 ${
                   listening
                     ? "bg-red-500 hover:bg-red-600 text-white shadow-lg scale-110 animate-pulse"
-                    : isLoading
+                    : isLoading || isAudioProcessing
                       ? "bg-gray-400 text-white shadow-lg"
                       : "bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:scale-105"
                 }`}
@@ -103,19 +154,23 @@ export function VoicePopup({
             {/* Status Text */}
             <div className="text-center">
               <p className="text-xl font-medium text-gray-900">
-                {isLoading 
-                  ? "Thinking..." 
-                  : listening 
-                    ? "Listening..." 
-                    : "Tap to speak"
+                {isAudioProcessing 
+                  ? "Generating Audio..." 
+                  : isLoading 
+                    ? "Thinking..." 
+                    : listening 
+                      ? "Listening..." 
+                      : "Tap to speak"
                 }
               </p>
               <p className="text-sm text-gray-500 mt-2">
-                {isLoading
-                  ? "I'm processing your question"
-                  : listening 
-                    ? "I'm listening to your question" 
-                    : "Ask me anything with your voice"
+                {isAudioProcessing
+                  ? "Converting response to speech"
+                  : isLoading
+                    ? "I'm processing your question"
+                    : listening 
+                      ? "I'm listening to your question" 
+                      : "Ask me anything with your voice"
                 }
               </p>
             </div>

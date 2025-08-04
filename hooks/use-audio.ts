@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 
 export const useAudio = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const currentRequestRef = useRef<AbortController | null>(null);
@@ -26,6 +27,7 @@ export const useAudio = () => {
       currentSourceRef.current = null;
     }
     setIsPlaying(false);
+    setIsProcessing(false);
   }, []);
 
   const playAudio = useCallback(
@@ -33,6 +35,9 @@ export const useAudio = () => {
       try {
         // Cancel any previous request and stop current audio
         stopAudio();
+        
+        // Set processing state
+        setIsProcessing(true);
         
         // Reset cancelled flag for new request
         isCancelledRef.current = false;
@@ -79,6 +84,7 @@ export const useAudio = () => {
 
         source.onended = () => {
           setIsPlaying(false);
+          setIsProcessing(false);
           currentSourceRef.current = null;
         };
 
@@ -89,6 +95,7 @@ export const useAudio = () => {
           console.error("Error playing audio:", error);
         }
         setIsPlaying(false);
+        setIsProcessing(false);
         currentSourceRef.current = null;
       } finally {
         // Clear the request reference
@@ -98,5 +105,5 @@ export const useAudio = () => {
     [stopAudio],
   );
 
-  return { playAudio, stopAudio, isPlaying };
+  return { playAudio, stopAudio, isPlaying, isProcessing };
 };
